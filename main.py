@@ -1,6 +1,6 @@
 import httpx
 import urllib.parse
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from starlette.applications import Starlette
 from mcp.server.sse import SseServerTransport
 from starlette.requests import Request
@@ -58,18 +58,43 @@ async def fetch_session_id() -> Optional[str]:
 mcp = FastMCP("Hyperskill")
 
 @mcp.tool()
-async def find_topics_on_hyperskill(topics: list[str]) -> list[str]:
-    """Find topics on Hyperskill"""
-    # Assuming the intention is to return a list of formatted strings for each topic found
-    # This is just an example fix, the actual logic might be different
-    # Call search_hyperskill for each topic and return the target_id of the first result
-
-    results = []
+async def find_topics_on_hyperskill(topics: list[str], programming_language: str) -> list[Dict[str, Any]]:
+    """Find topics on Hyperskill and return their details
+    
+    Args:
+        topics: List of topic keywords to search for
+        programming_language: Programming language to filter topics by
+    Returns:
+        List of dictionaries containing topic id, title, url and clickable link
+    """
+    # First find the topic IDs
+    topic_ids = []
     for topic in topics:
-        result = await search_hyperskill(topic)
+        result = await search_hyperskill(topic + " " + programming_language)
         if result:
-            results.append(result)
-    return results
+            topic_ids.append(result)
+    
+    # If no topics found, return empty list
+    if not topic_ids:
+        return []
+    
+    # Fetch details for all found topics
+    details = await fetch_topic_details(topic_ids)
+    
+    # Extract relevant information
+    if details and "topics" in details:
+        return [
+            {
+                "id": topic["id"],
+                "title": topic["title"],
+                "url": f"https://hyperskill.org/learn/topic/{topic['id']}",
+                "link": f"[{topic['title']}](https://hyperskill.org/learn/topic/{topic['id']})"
+            }
+            for topic in details["topics"]
+        ]
+    
+    # Return just the IDs if fetching details failed
+    return [{"id": tid} for tid in topic_ids]
 
 async def search_hyperskill(keyword: str) -> Optional[str]:
     """Searches Hyperskill for a given keyword and returns the target_id of the first result."""
@@ -109,6 +134,40 @@ async def search_hyperskill(keyword: str) -> Optional[str]:
     except Exception as e:
         print(f"An unexpected error occurred during search for '{keyword}': {e}")
         # Consider more specific exception handling if needed
+        return None
+
+async def fetch_topic_details(topic_ids: List[str]) -> Optional[Dict[str, Any]]:
+    """Fetches detailed information about topics from the Hyperskill API.
+    
+    Args:
+        topic_ids: A list of topic IDs to fetch details for
+        
+    Returns:
+        A dictionary containing the topic details or None if the request fails
+    """
+    if not topic_ids:
+        return None
+    
+    # Convert list of IDs to comma-separated string
+    ids_param = ",".join(topic_ids)
+    url = f"https://hyperskill.org/api/topics?ids={ids_param}"
+    
+    headers = {"accept": "application/json"}
+    session_id = await fetch_session_id()
+    if session_id:
+        headers["Cookie"] = f"sessionid={session_id}"
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, headers=headers)
+            response.raise_for_status()
+            
+            return response.json()
+    except httpx.RequestError as exc:
+        print(f"An error occurred while requesting {exc.request.url!r}: {exc}")
+        return None
+    except Exception as e:
+        print(f"An unexpected error occurred while fetching topic details: {e}")
         return None
 
 # Create Starlette application with SSE transport
