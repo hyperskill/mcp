@@ -49,7 +49,7 @@ When interacting with an AI agent that has access to MCP-Hyperskill, you can ask
 ```
 Explain topics in the code using Hyperskill:
 
-```python
+
 def fibonacci(n):
     if n <= 1:
         return n
@@ -69,6 +69,6 @@ The response will include:
 
 <div align="center">
   <img src="resources/cursor_example.webp" alt="Example of topic explanation in Cursor" width="600">
-  <p><em>Screenshot: AI explaining code topics with Hyperskill resources in Cursor</em></p>
+  <p><em>Example of AI explaining code topics with Hyperskill resources in Cursor</em></p>
 </div>
 

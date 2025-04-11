@@ -4,7 +4,7 @@ from typing import Optional, List, Dict, Any
 from starlette.applications import Starlette
 from mcp.server.sse import SseServerTransport
 from starlette.requests import Request
-from starlette.responses import HTMLResponse
+from starlette.responses import PlainTextResponse
 from starlette.routing import Mount, Route
 from mcp.server import Server
 import uvicorn
@@ -248,6 +248,7 @@ def create_starlette_app(mcp_server: Server, *, debug: bool = False) -> Starlett
     return Starlette(
         debug=debug,
         routes=[
+            Route("/", endpoint=lambda request: PlainTextResponse("Hello from Hyperskill MCP!")),
             Route("/sse", endpoint=handle_sse),
             Mount("/messages/", app=sse.handle_post_message),
         ],
