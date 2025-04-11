@@ -57,6 +57,29 @@ async def fetch_session_id() -> Optional[str]:
 
 mcp = FastMCP("Hyperskill")
 
+async def fetch_parent_topics(topic_ids: List[str]) -> Dict[str, str]:
+    """Fetches titles for parent topic IDs.
+    
+    Args:
+        topic_ids: List of parent topic IDs
+        
+    Returns:
+        Dictionary mapping topic IDs to their titles
+    """
+    if not topic_ids:
+        return {}
+    
+    # Fetch details for all parent topics
+    details = await fetch_topic_details(topic_ids)
+    
+    # Create a mapping of ID to title
+    parent_map = {}
+    if details and "topics" in details:
+        for topic in details["topics"]:
+            parent_map[str(topic["id"])] = topic["title"]
+    
+    return parent_map
+
 @mcp.tool()
 async def find_topics_on_hyperskill(topics: list[str], programming_language: str) -> list[Dict[str, Any]]:
     """Find topics on Hyperskill and return their details
@@ -83,15 +106,36 @@ async def find_topics_on_hyperskill(topics: list[str], programming_language: str
     
     # Extract relevant information
     if details and "topics" in details:
-        return [
-            {
+        result = []
+        
+        # Collect all parent topic IDs for batch fetching
+        all_parent_ids = []
+        for topic in details["topics"]:
+            if "hierarchy" in topic and topic["hierarchy"]:
+                all_parent_ids.extend([str(id) for id in topic["hierarchy"]])
+        
+        # Fetch parent topic titles in one batch request
+        parent_topic_map = await fetch_parent_topics(list(set(all_parent_ids)))
+        
+        for topic in details["topics"]:
+            # Create hierarchy string if hierarchy exists
+            hierarchy_string = ""
+            if "hierarchy" in topic and topic["hierarchy"]:
+                hierarchy_titles = []
+                for parent_id in topic["hierarchy"]:
+                    parent_title = parent_topic_map.get(str(parent_id), f"Unknown ({parent_id})")
+                    hierarchy_titles.append(parent_title)
+                hierarchy_string = " / ".join(hierarchy_titles)
+            
+            result.append({
                 "id": topic["id"],
                 "title": topic["title"],
                 "url": f"https://hyperskill.org/learn/topic/{topic['id']}",
-                "link": f"[{topic['title']}](https://hyperskill.org/learn/topic/{topic['id']})"
-            }
-            for topic in details["topics"]
-        ]
+                "link": f"[{topic['title']}](https://hyperskill.org/learn/topic/{topic['id']})",
+                "hierarchy": hierarchy_string
+            })
+        
+        return result
     
     # Return just the IDs if fetching details failed
     return [{"id": tid} for tid in topic_ids]
