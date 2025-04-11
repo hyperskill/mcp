@@ -80,15 +80,29 @@ async def fetch_parent_topics(topic_ids: List[str]) -> Dict[str, str]:
     
     return parent_map
 
+
+@mcp.tool()
+async def explain_topics_in_the_code(topics: list[str], programming_language: str) -> list[Dict[str, Any]]:
+    """Explain topics in the code
+    
+    Args:
+        topics: List of key topics (or concepts) the user needs to understand to fully grasp given code. Use Hyperskill-compatible topic names like: "for loop", "list comprehensions", "lambda expressions", "decorators", "file I/O", "context managers", etc. Be precise. Avoid duplicates. Avoid overly broad or generic topics.
+        programming_language: Programming language of the given code.
+    Returns:
+        List of dictionaries containing topic id, title, url, hierarchy and clickable link
+    """
+    topics_details = await find_topics_on_hyperskill(topics, programming_language)
+    return topics_details
+
 @mcp.tool()
 async def find_topics_on_hyperskill(topics: list[str], programming_language: str) -> list[Dict[str, Any]]:
     """Find topics on Hyperskill and return their details
     
     Args:
-        topics: List of topic keywords to search for
-        programming_language: Programming language to filter topics by
+        topics: List of topic keywords to search for. Use Hyperskill-compatible topic names like: "for loop", "list comprehensions", "lambda expressions", "decorators", "file I/O", "context managers", etc. Be precise. Avoid duplicates. Avoid overly broad or generic topics.
+        programming_language: Programming language to filter topics by.
     Returns:
-        List of dictionaries containing topic id, title, url and clickable link
+        List of dictionaries containing topic id, title, url, hierarchy and clickable link
     """
     # First find the topic IDs
     topic_ids = []
