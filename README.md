@@ -24,6 +24,24 @@ uv run main.py
 
 This will start a server on `http://0.0.0.0:8080` that AI agents can connect to.
 
+### Command-line Arguments
+
+The server supports the following command-line arguments:
+
+```bash
+uv run main.py [--host HOST] [--port PORT] [--debug]
+```
+
+- `--host HOST`: Host to bind the server to (default: 0.0.0.0)
+- `--port PORT`: Port to bind the server to (default: 8080)
+- `--debug`: Run in debug mode
+
+Example:
+
+```bash
+uv run main.py --host 127.0.0.1 --port 9000 --debug
+```
+
 ## MCP Tools
 
 ### explain_topics_in_the_code
@@ -55,7 +73,7 @@ def fibonacci(n):
         return n
     else:
         return fibonacci(n-1) + fibonacci(n-2)
-        
+
 result = fibonacci(10)
 print(result)
 ```
@@ -71,4 +89,3 @@ The response will include:
   <img src="resources/cursor_example.webp" alt="Example of topic explanation in Cursor" width="600">
   <p><em>Example of AI explaining code topics with Hyperskill resources in Cursor</em></p>
 </div>
-

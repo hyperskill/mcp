@@ -1,4 +1,5 @@
 from typing import Dict, Any
+import argparse
 from starlette.applications import Starlette
 from mcp.server.sse import SseServerTransport
 from starlette.requests import Request
@@ -69,8 +70,22 @@ def create_starlette_app(mcp_server: Server, *, debug: bool = False) -> Starlett
     )
 
 if __name__ == "__main__":
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="Run the Hyperskill MCP server")
+    parser.add_argument("--host", default="0.0.0.0", help="Host to bind the server to (default: 0.0.0.0)")
+    parser.add_argument("--port", type=int, default=8080, help="Port to bind the server to (default: 8080)")
+    parser.add_argument("--debug", action="store_true", help="Run in debug mode")
+    args = parser.parse_args()
+
     mcp_server = mcp._mcp_server
 
     # Create and run Starlette app
-    starlette_app = create_starlette_app(mcp_server, debug=True)
-    uvicorn.run(starlette_app, host="0.0.0.0", port=8080)
+    starlette_app = create_starlette_app(mcp_server, debug=args.debug)
+
+    # Log server startup information
+    print(f"Starting Hyperskill MCP server on http://{args.host}:{args.port}")
+    if args.debug:
+        print("Debug mode is enabled")
+
+    # Pass debug flag to uvicorn for more verbose logging
+    uvicorn.run(starlette_app, host=args.host, port=args.port, log_level="debug" if args.debug else "info")
