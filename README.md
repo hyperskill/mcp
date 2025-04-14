@@ -1,5 +1,7 @@
 # MCP-Hyperskill
 
+<img src="http://nanda-registry.com/api/v1/verification/badge/a3e09952-e1bf-44ed-96cc-65defbf3d8d4/" alt="Verified MCP Server" />
+
 A FastMCP integration with Hyperskill that allows AI agents to explain programming topics using Hyperskill's learning resources.
 
 ## Features
